@@ -1,4 +1,4 @@
-package rosettaDroid
+package main
 
 import (
     "fmt"
@@ -9,8 +9,12 @@ import (
 
 func main() {
     
-    if len(os.Args) > 3 {
-        fmt.Println("Please input input-file and output-path")
+    if len(os.Args) == 2 {
+        fmt.Println("Generating output on current directory")
+    } else if len(os.Args) == 3 {
+        fmt.Println("Generating output on "+ os.Args[2])
+    } else {
+        fmt.Println("Please input input-file and optionally output-path")
         os.Exit(1)
     }
     
@@ -20,7 +24,7 @@ func main() {
         fmt.Println(err)
         os.Exit(1)
     }
-    fmt.Println("Opening From" + excelFilePath)
+    // fmt.Println("Opening From" + excelFilePath)
     
     xlFile, error := xlsx.OpenFile(excelFilePath)
     if error != nil {
@@ -28,9 +32,25 @@ func main() {
         os.Exit(1)
     }
     for _, sheet := range xlFile.Sheets {
-        for _, row := range sheet.Rows {
-            for _, cell := range row.Cells {
-                fmt.Printf("%s\n", cell.String())
+        for rowNumber, row := range sheet.Rows {
+            for cellNumber, cell := range row.Cells {
+                // first row is for available languages
+                if (rowNumber == 0) {
+                    
+                    // skip empty cell
+                    if (cellNumber > 0) {
+                        fmt.Printf("%s\n", cell.String())
+                    }
+                    
+                } else {
+                    // first column is for the key
+                    if (cellNumber == 0) {
+                        
+                    } else { // this is for the language value
+                        fmt.Printf("%s\n", cell.String())
+                    }
+                }
+                
             }
         }
     }
