@@ -58,7 +58,6 @@ func main() {
 	sheet := xlFile.Sheets[0] // only process first sheet
 
 	var languages []string
-	var dirPermission int = 0777
 	// get all available language on the first row
 	languagesRow := sheet.Rows[0]
 	for cellNumber, cell := range languagesRow.Cells {
@@ -66,9 +65,9 @@ func main() {
 		if cellNumber > 0 {
 			// create directory first
 			if cell.String() != "" {
-				os.Mkdir("values-"+cell.String(), dirPermission)
+				os.Mkdir("values-"+cell.String(), 0777)
 			} else {
-				os.Mkdir("values", dirPermission)
+				os.Mkdir("values", 0777)
 			}
 
 			// insert the language code into the array
@@ -131,6 +130,10 @@ func main() {
 		pathSeparator := string(os.PathSeparator)
 		file, _ := os.Create(strings.Join([]string{langDirectory, outputFilename}, pathSeparator))
 		xmlWriter := io.Writer(file)
+		if _, errWrite := xmlWriter.Write([]byte(xml.Header)); errWrite != nil {
+			fmt.Printf("error: %v\n", errWrite)
+			break
+		}
 		enc := xml.NewEncoder(xmlWriter)
 		enc.Indent("  ", "    ")
 		if err := enc.Encode(xmlContent); err != nil {
