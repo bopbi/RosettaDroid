@@ -10,27 +10,30 @@ import (
 	"strings"
 )
 
+// xml structure
+type String struct {
+	Name  string `xml:"name,attr"`
+	Value string `xml:",innerxml"`
+}
+
+type Resources struct {
+	XMLName xml.Name `xml:"resources"`
+	Strings []String `xml:"string"`
+}
+
 func main() {
+	toXML(os.Args)
+}
 
-	// xml structure
-
-	type String struct {
-		Name  string `xml:"name,attr"`
-		Value string `xml:",innerxml"`
-	}
-
-	type Resources struct {
-		XMLName xml.Name `xml:"resources"`
-		Strings []String `xml:"string"`
-	}
-
+func toXML(args []string) {
+	pathSeparator := string(os.PathSeparator)
 	var inputFilename = ""
 	var outputDir = ""
-	if len(os.Args) > 1 {
+	if len(args) > 1 {
 		fmt.Println("Generating output on current directory")
-		inputFilename = os.Args[1]
-		if len(os.Args) == 3 {
-			outputDir = os.Args[2]
+		inputFilename = args[1]
+		if len(args) == 3 {
+			outputDir = args[2]
 			fmt.Println("Generating output on " + outputDir)
 		}
 	} else {
@@ -51,8 +54,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	if outputDir != "" {
+		os.Mkdir(outputDir, 0777)
+	}
+
 	/*
-	   this app work by generating string xml by each language
+		this app work by generating string xml by each language
 	*/
 
 	sheet := xlFile.Sheets[0] // only process first sheet
@@ -64,11 +71,23 @@ func main() {
 		// skip the first cell
 		if cellNumber > 0 {
 			// create directory first
-			if cell.String() != "" {
-				os.Mkdir("values-"+cell.String(), 0777)
+			var path = ""
+
+			if outputDir == "" {
+				if cell.String() != "" {
+					path = "values-" + cell.String()
+				} else {
+					path = "values"
+				}
 			} else {
-				os.Mkdir("values", 0777)
+				if cell.String() != "" {
+					path = strings.Join([]string{outputDir, "values-" + cell.String()}, pathSeparator)
+				} else {
+					path = strings.Join([]string{outputDir, "values"}, pathSeparator)
+				}
 			}
+
+			os.Mkdir(path, 0777)
 
 			// insert the language code into the array
 			languages = append(languages, cell.String())
@@ -127,8 +146,16 @@ func main() {
 		} else {
 			langDirectory = "values"
 		}
-		pathSeparator := string(os.PathSeparator)
-		file, _ := os.Create(strings.Join([]string{langDirectory, outputFilename}, pathSeparator))
+
+		var generatedPath string
+		if outputDir == "" {
+			generatedPath = strings.Join([]string{langDirectory, outputFilename}, pathSeparator)
+		} else {
+			generatedPath = strings.Join([]string{outputDir, langDirectory, outputFilename}, pathSeparator)
+		}
+
+		file, _ := os.Create(generatedPath)
+
 		xmlWriter := io.Writer(file)
 		if _, errWrite := xmlWriter.Write([]byte(xml.Header)); errWrite != nil {
 			fmt.Printf("error: %v\n", errWrite)
@@ -144,5 +171,4 @@ func main() {
 		fmt.Printf("the xml working for language [%s] is generated", language)
 		fmt.Println("")
 	}
-
 }
