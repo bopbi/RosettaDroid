@@ -10,4 +10,5 @@ this app using xlsx library from https://github.com/tealeg/xlsx
 
 ## how to use
 parameter are input file, and optionally output directory, as shown by example below:
-rosetta input-example.xlsx res
+
+    rosetta input-example.xlsx res
