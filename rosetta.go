@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/tealeg/xlsx"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/tealeg/xlsx"
 )
 
 // xml structure
@@ -72,16 +73,16 @@ func toXML(args []string) {
 		if cellNumber > 0 {
 			// create directory first
 			var path = ""
-
+			var cellContent, _ = cell.String()
 			if outputDir == "" {
-				if cell.String() != "" {
-					path = "values-" + cell.String()
+				if cellContent != "" {
+					path = "values-" + cellContent
 				} else {
 					path = "values"
 				}
 			} else {
-				if cell.String() != "" {
-					path = strings.Join([]string{outputDir, "values-" + cell.String()}, pathSeparator)
+				if cellContent != "" {
+					path = strings.Join([]string{outputDir, "values-" + cellContent}, pathSeparator)
 				} else {
 					path = strings.Join([]string{outputDir, "values"}, pathSeparator)
 				}
@@ -90,7 +91,7 @@ func toXML(args []string) {
 			os.Mkdir(path, 0777)
 
 			// insert the language code into the array
-			languages = append(languages, cell.String())
+			languages = append(languages, cellContent)
 		} else {
 			continue
 		}
@@ -103,9 +104,10 @@ func toXML(args []string) {
 	for rowNumber, row := range sheet.Rows {
 		for cellNumber, cell := range row.Cells {
 			// first colomn is for available languages
+			var cellContent, _ = cell.String()
 			if rowNumber > 0 {
-				if cellNumber == 0 {
-					stringKey = append(stringKey, cell.String())
+				if (cellNumber == 0) && (cellContent != "") {
+					stringKey = append(stringKey, cellContent)
 				} else {
 					continue
 				}
@@ -117,18 +119,14 @@ func toXML(args []string) {
 	for languageIndex, language := range languages {
 		fmt.Printf("Working for language [%s] ", language)
 		fmt.Println("")
-		var stringValues []string
 		xmlContent := &Resources{}
 		for rowNumber, row := range sheet.Rows {
 			for cellNumber, cell := range row.Cells {
-
 				if rowNumber > 0 {
-					if cellNumber == languageIndex+1 {
+					var cellContent, _ = cell.String()
+					if (cellNumber == languageIndex+1) && (cellContent != "") {
 						name := stringKey[rowNumber-1]
-						stringValues = append(stringValues, cell.String())
-						xmlContent.Strings = append(xmlContent.Strings, String{Name: name, Value: cell.String()})
-						fmt.Printf(" [%s] => [%s]", name, cell)
-						fmt.Println("")
+						xmlContent.Strings = append(xmlContent.Strings, String{Name: name, Value: cellContent})
 					} else {
 						continue
 					}
